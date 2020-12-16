@@ -78,16 +78,16 @@ contourf(grid.x, grid.y, params.eta',
 
 E₀ = 0.04 # energy of initial condition
 
-K = @. sqrt(grid.Krsq)                          # a 2D array with the total wavenumber
+K = @. sqrt(grid.Krsq)                             # a 2D array with the total wavenumber
 
 Random.seed!(1234)
 qih = randn(Complex{eltype(grid)}, size(sol))
 @. qih = ifelse(K < 6  * 2π/L, 0, qih)
 @. qih = ifelse(K > 12 * 2π/L, 0, qih)
-qih *= sqrt(E₀ / energy(qih, grid))             # normalize qi to have energy E₀
+qih *= sqrt(E₀ / energy(qih, vars, params, grid))  # normalize qi to have energy E₀
 qi = irfft(qih, grid.nx)
 
-SingleLayerQG.set_zeta!(prob, qi)
+SingleLayerQG.set_ζ!(prob, qi)
 nothing # hide
 
 # Let's plot the initial vorticity field:
@@ -105,7 +105,7 @@ p1 = heatmap(x, y, vars.q',
           title = "initial vorticity ζ=∂v/∂x-∂u/∂y",
      framestyle = :box)
 
-p2 = contourf(x, y, vars.psi',
+p2 = contourf(x, y, vars.ψ',
         aspectratio = 1,
              c = :viridis,
         levels = range(-0.35, stop=0.35, length=10), 
@@ -155,8 +155,8 @@ nothing # hide
 # their corresponding zonal mean structure.
 
 function plot_output(prob)
-  ζ = prob.vars.zeta
-  ψ = prob.vars.psi
+  ζ = prob.vars.ζ
+  ψ = prob.vars.ψ
   η = prob.params.eta
 
   pζ = heatmap(x, y, ζ',
@@ -223,9 +223,9 @@ anim = @animate for j = 0:round(Int, nsteps/nsubs)
     println(log)
   end  
 
-  p[1][1][:z] = vars.zeta
+  p[1][1][:z] = vars.ζ
   p[1][:title] = "vorticity, t="*@sprintf("%.2f", clock.t)
-  p[2][1][:z] = vars.psi
+  p[2][1][:z] = vars.ψ
 
   stepforward!(prob, diags, nsubs)
   SingleLayerQG.updatevars!(prob)
